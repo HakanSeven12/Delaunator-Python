@@ -8,22 +8,23 @@ class Delaunator:
         if (len(points) < 3):
             raise ValueError("Need at least 3 points")
         self.coords = coords
+        n = len(self.coords) >> 1
 
         # arrays that will store the triangulation graph
         maxTriangles = max(2 * n - 5, 0)
-        self._triangles = maxTriangles * 3
-        self._halfedges = maxTriangles * 3
+        self._triangles = [None] * maxTriangles * 3
+        self._halfedges = [None] * maxTriangles * 3
 
         # temporary arrays for tracking the edges of the advancing convex hull
-        self._hashSize = []
-        self._hullPrev = [] # edge to prev edge
-        self._hullNext = [] # edge to next edge
-        self._hullTri = [] # edge to adjacent triangle
-        self._hullHash = [] # angular edge hash
+        self.hashSize = math.ceil(math.sqrt(n))
+        self.hullPrev = [None] * n # edge to prev edge
+        self.hullNext = [None] * n # edge to next edge
+        self.hullTri = [None] * n # edge to adjacent triangle
+        self.hullHash = [-1] * self.hashSize # angular edge hash
 
         # temporary arrays for sorting points
-        self._ids =  []
-        self._dists = []
+        self._ids =  [None] * n
+        self._dists = [None] * n
 
         self.update()
 
@@ -43,7 +44,7 @@ class Delaunator:
             if (y < minY): minY = y
             if (x > maxX): maxX = x
             if (y > maxY): maxY = y
-            self._ids.append(i)
+            self._ids[i] = i
 
         cx = (minX + maxX) / 2
         cy = (minY + maxY) / 2
@@ -128,11 +129,11 @@ class Delaunator:
             i2y = y
 
         center = circumcenter(i0x, i0y, i1x, i1y, i2x, i2y)
-        self._cx = center.x
-        self._cy = center.y
+        self._cx = center[0]
+        self._cy = center[1]
 
         for i in range(0,n):
-            self._dists[i] = dist(coords[2 * i], coords[2 * i + 1], center.x, center.y)
+            self._dists[i] = dist(coords[2 * i], coords[2 * i + 1], center[0], center[1])
 
         # sort the points by distance from the seed triangle circumcenter
         quicksort(self._ids, self._dists, 0, n - 1)
@@ -141,25 +142,24 @@ class Delaunator:
         self._hullStart = i0
         hullSize = 3
 
-        hullNext[i0] = hullPrev[i2] = i1
-        hullNext[i1] = hullPrev[i0] = i2
-        hullNext[i2] = hullPrev[i1] = i0
+        self.hullNext[i0] = self.hullPrev[i2] = i1
+        self.hullNext[i1] = self.hullPrev[i0] = i2
+        self.hullNext[i2] = self.hullPrev[i1] = i0
 
-        hullTri[i0] = 0
-        hullTri[i1] = 1
-        hullTri[i2] = 2
+        self.hullTri[i0] = 0
+        self.hullTri[i1] = 1
+        self.hullTri[i2] = 2
 
-        hullHash.fill(-1)
-        hullHash[self._hashKey(i0x, i0y)] = i0
-        hullHash[self._hashKey(i1x, i1y)] = i1
-        hullHash[self._hashKey(i2x, i2y)] = i2
+        self.hullHash[self._hashKey(i0x, i0y)] = i0
+        self.hullHash[self._hashKey(i1x, i1y)] = i1
+        self.hullHash[self._hashKey(i2x, i2y)] = i2
 
         self.trianglesLen = 0
         self._addTriangle(i0, i1, i2, -1, -1, -1)
         xp=0
         yp=0
 
-        for k in range(0,self._ids.length):
+        for k in range(0,len(self._ids)):
             i = self._ids[k]
             x = coords[2 * i]
             y = coords[2 * i + 1]
@@ -175,17 +175,17 @@ class Delaunator:
                 start = 0
             key = self._hashKey(x, y)
 
-            for j in range(0,self._hashSize):
-                start = hullHash[(key + j) % self._hashSize]
-                if (start != -1 and start != hullNext[start]):
+            for j in range(0,self.hashSize):
+                start = self.hullHash[(key + j) % self.hashSize]
+                if (start != -1 and start != self.hullNext[start]):
                     break
 
-            start = hullPrev[start]
-            e = start, q
-            q = hullNext[e]
+            start = self.hullPrev[start]
+            e = start
+            q = self.hullNext[e]
             
             while True:
-                if Orient(x, y, coords[2 * e], coords[2 * e + 1], coords[2 * q], coords[2 * q + 1]):
+                if orient(x, y, coords[2 * e], coords[2 * e + 1], coords[2 * q], coords[2 * q + 1]):
                     break
                 e = q
                 if (e == start):
@@ -245,8 +245,8 @@ class Delaunator:
         self.halfedges = self._halfedges.subarray(0, self.trianglesLen)
         print (self.triangles)
 
-    def _hashKey(x, y):
-        return math.floor(pseudoAngle(x - self._cx, y - self._cy) * self._hashSize) % self._hashSize
+    def _hashKey(self,x, y):
+        return math.floor(pseudoAngle(x - self._cx, y - self._cy) * self.hashSize) % self.hashSize
 
     def _legalize(a):
         i = 0
@@ -332,13 +332,13 @@ class Delaunator:
 
         return ar
 
-    def _link(a, b):
+    def _link(self,a, b):
         self._halfedges[a] = b
         if (b != -1):
             self._halfedges[b] = a
 
     # add a new triangle given vertex indices and adjacent half-edge ids
-    def _addTriangle(i0, i1, i2, a, b, c):
+    def _addTriangle(self,i0, i1, i2, a, b, c):
         t = self.trianglesLen
 
         self._triangles[t] = i0
@@ -355,7 +355,10 @@ class Delaunator:
 
 # monotonically increases with real angle, but doesn't need expensive trigonometry
 def pseudoAngle(dx, dy):
-    p = dx / (math.abs(dx) + math.abs(dy))
+    try:
+      p = dx / (abs(dx) + abs(dy))
+    except:
+      p = 0
 
     if (dy > 0):
         return (3 - p) / 4 # [0..1]
@@ -433,7 +436,7 @@ def circumcenter(ax, ay, bx, by, cx, cy):
     x = ax + (ey * bl - dy * cl) * d
     y = ay + (dx * cl - ex * bl) * d
 
-    return {x, y}
+    return x, y
 
 def quicksort(ids, dists, left, right):
     if (right - left <= 20):
@@ -494,11 +497,11 @@ def swap(arr, i, j):
 
 points = [[168, 180], [168, 178], [168, 179], [168, 181], [168, 183]]
 n = len(points)
-coords = []
+coords = [None] * n * 2
 
 for i in range(0,n):
     p = points[i]
-    coords.append(p[0])
-    coords.append(p[1])
+    coords[2 * i] = (p[0])
+    coords[2 * i+1] = (p[1])
 
 Delaunator().constructor(coords)
