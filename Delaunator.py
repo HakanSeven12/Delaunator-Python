@@ -1,51 +1,40 @@
 EPSILON = 2**-52
 EDGE_STACK =[]
 
+import math
+
 class Delaunator:
-
-    def __init__():
-        getX = defaultGetX
-        getY = defaultGetY
-        n = points.length
-    
-        for i in range(0,n):
-            p = points[i]
-            coords[2 * i] = getX(p)
-            coords[2 * i + 1] = getY(p)
-
-        return coords
-
-    def constructor(coords):
-        if (points.Count() < 3):
+    def constructor(self, coords):
+        if (len(points) < 3):
             raise ValueError("Need at least 3 points")
         self.coords = coords
 
         # arrays that will store the triangulation graph
-        maxTriangles = Math.max(2 * n - 5, 0)
+        maxTriangles = max(2 * n - 5, 0)
         self._triangles = maxTriangles * 3
         self._halfedges = maxTriangles * 3
 
         # temporary arrays for tracking the edges of the advancing convex hull
-        self._hashSize = Math.ceil(Math.sqrt(n))
-        self._hullPrev = (n) # edge to prev edge
-        self._hullNext = (n) # edge to next edge
-        self._hullTri = (n) # edge to adjacent triangle
-        self._hullHash = (self._hashSize).fill(-1) # angular edge hash
+        self._hashSize = []
+        self._hullPrev = [] # edge to prev edge
+        self._hullNext = [] # edge to next edge
+        self._hullTri = [] # edge to adjacent triangle
+        self._hullHash = [] # angular edge hash
 
         # temporary arrays for sorting points
-        self._ids =  (n)
-        self._dists = (n)
+        self._ids =  []
+        self._dists = []
 
         self.update()
 
-    def update():
-        n = coords.length >> 1
+    def update(self):
+        n = len(self.coords) >> 1
 
         # populate an array of point indices; calculate input data bbox
-        minX = Infinity
-        minY = Infinity
-        maxX = -Infinity
-        maxY = -Infinity
+        minX = math.inf
+        minY = math.inf
+        maxX = -math.inf
+        maxY = -math.inf
 
         for i in range(0,n):
             x = coords[2 * i]
@@ -54,13 +43,15 @@ class Delaunator:
             if (y < minY): minY = y
             if (x > maxX): maxX = x
             if (y > maxY): maxY = y
-            self._ids[i] = i
+            self._ids.append(i)
 
         cx = (minX + maxX) / 2
         cy = (minY + maxY) / 2
 
-        minDist = Infinity
-        i0, i1, i2
+        minDist = math.inf
+        i0 = 0
+        i1 = 0
+        i2 = 0
 
         # pick a seed point close to the center
         for i in range(0,n):
@@ -72,7 +63,7 @@ class Delaunator:
         i0x = coords[2 * i0]
         i0y = coords[2 * i0 + 1]
 
-        minDist = Infinity
+        minDist = math.inf
 
         # find the point closest to the seed
         for i in range(0,n):
@@ -87,7 +78,7 @@ class Delaunator:
         i1x = coords[2 * i1]
         i1y = coords[2 * i1 + 1]
 
-        minRadius = Infinity
+        minRadius = math.inf
 
         # find the third point which forms the smallest circumcircle with the first two
         for i in range(0,n):
@@ -102,7 +93,7 @@ class Delaunator:
         i2x = coords[2 * i2]
         i2y = coords[2 * i2 + 1]
 
-        if (minRadius == Infinity):
+        if (minRadius == math.inf):
             # order collinear points by dx (or dy if all x are identical)
             # and return the list as a hull
             for i in range(0,n):
@@ -111,7 +102,7 @@ class Delaunator:
             quicksort(self._ids, self._dists, 0, n - 1)
             hull =  (n)
             j = 0
-            d0 = -Infinity
+            d0 = -math.inf
             for i in range(0,n):
                 id = self._ids[i]
                 if (self._dists[id] > d0):
@@ -174,7 +165,7 @@ class Delaunator:
             y = coords[2 * i + 1]
 
             # skip near-duplicate points
-            if (k > 0 and Math.abs(x - xp) <= EPSILON and Math.abs(y - yp) <= EPSILON):
+            if (k > 0 and math.abs(x - xp) <= EPSILON and math.abs(y - yp) <= EPSILON):
                 xp = x
                 yp = y
 
@@ -252,9 +243,10 @@ class Delaunator:
         # trim typed triangle mesh arrays
         self.triangles = self._triangles.subarray(0, self.trianglesLen)
         self.halfedges = self._halfedges.subarray(0, self.trianglesLen)
+        print (self.triangles)
 
     def _hashKey(x, y):
-        return Math.floor(pseudoAngle(x - self._cx, y - self._cy) * self._hashSize) % self._hashSize
+        return math.floor(pseudoAngle(x - self._cx, y - self._cy) * self._hashSize) % self._hashSize
 
     def _legalize(a):
         i = 0
@@ -363,7 +355,7 @@ class Delaunator:
 
 # monotonically increases with real angle, but doesn't need expensive trigonometry
 def pseudoAngle(dx, dy):
-    p = dx / (Math.abs(dx) + Math.abs(dy))
+    p = dx / (math.abs(dx) + math.abs(dy))
 
     if (dy > 0):
         return (3 - p) / 4 # [0..1]
@@ -380,7 +372,7 @@ def orientIfSure(px, py, rx, ry, qx, qy):
     l = (ry - py) * (qx - px)
     r = (rx - px) * (qy - py)
     
-    if (Math.abs(l - r) >= 3.3306690738754716e-16 * Math.abs(l + r)):
+    if (abs(l - r) >= 3.3306690738754716e-16 * abs(l + r)):
         return l - r
     else:
         return 0
@@ -415,7 +407,10 @@ def circumradius(ax, ay, bx, by, cx, cy):
 
     bl = dx * dx + dy * dy
     cl = ex * ex + ey * ey
-    d = 0.5 / (dx * ey - dy * ex)
+    try:
+      d = 0.5 / (dx * ey - dy * ex)
+    except:
+      d = 0
 
     x = (ey * bl - dy * cl) * d
     y = (dx * cl - ex * bl) * d
@@ -430,7 +425,10 @@ def circumcenter(ax, ay, bx, by, cx, cy):
 
     bl = dx * dx + dy * dy
     cl = ex * ex + ey * ey
-    d = 0.5 / (dx * ey - dy * ex)
+    try:
+        d = 0.5 / (dx * ey - dy * ex)
+    except:
+        d = 0
 
     x = ax + (ey * bl - dy * cl) * d
     y = ay + (dx * cl - ex * bl) * d
@@ -494,8 +492,13 @@ def swap(arr, i, j):
     arr[i] = arr[j]
     arr[j] = tmp
 
-def defaultGetX(p):
-    return p[0]
+points = [[168, 180], [168, 178], [168, 179], [168, 181], [168, 183]]
+n = len(points)
+coords = []
 
-def defaultGetY(p):
-    return p[1]
+for i in range(0,n):
+    p = points[i]
+    coords.append(p[0])
+    coords.append(p[1])
+
+Delaunator().constructor(coords)
