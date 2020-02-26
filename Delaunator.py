@@ -1,7 +1,7 @@
-EPSILON = 2**-52
-EDGE_STACK =[]
-
 import math
+
+EPSILON = math.pow(2,-52)
+EDGE_STACK =[None] * 512
 
 class Delaunator:
     def constructor(self, coords):
@@ -101,7 +101,7 @@ class Delaunator:
                 self._dists[i] = (coords[2 * i] - coords[0]) or (coords[2 * i + 1] - coords[1])
 
             quicksort(self._ids, self._dists, 0, n - 1)
-            hull =  (n)
+            hull =  [None] * n
             j = 0
             d0 = -math.inf
             for i in range(0,n):
@@ -112,8 +112,8 @@ class Delaunator:
                     d0 = self._dists[id]
 
             self.hull = hull.subarray(0, j)
-            self.triangles =  (0)
-            self.halfedges =  (0)
+            self.triangles =  []
+            self.halfedges =  []
             return
 
         # swap the order of the seed points for counter-clockwise orientation
@@ -411,15 +411,12 @@ def circumradius(ax, ay, bx, by, cx, cy):
 
     bl = dx * dx + dy * dy
     cl = ex * ex + ey * ey
-    try:
-      d = 0.5 / (dx * ey - dy * ex)
-    except:
-      d = 0.5
+    d = math.sqrt(dx * ey - dy * ex)
 
     x = (ey * bl - dy * cl) * d
     y = (dx * cl - ex * bl) * d
 
-    return x * x + y * y
+    return math.pow(x,2) + math.pow(y,2)
 
 def circumcenter(ax, ay, bx, by, cx, cy):
     dx = bx - ax
@@ -429,10 +426,7 @@ def circumcenter(ax, ay, bx, by, cx, cy):
 
     bl = dx * dx + dy * dy
     cl = ex * ex + ey * ey
-    try:
-        d = 0.5 / (dx * ey - dy * ex)
-    except:
-        d = 0.5
+    d = math.sqrt(dx * ey - dy * ex)
 
     x = ax + (ey * bl - dy * cl) * d
     y = ay + (dx * cl - ex * bl) * d
