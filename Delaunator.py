@@ -1,4 +1,4 @@
-import math
+import math,sys
 
 EPSILON = math.pow(2,-52)
 EDGE_STACK =[None] * 512
@@ -121,14 +121,13 @@ class Delaunator:
             for i in range(0,n):
                 id = self._ids[i]
                 if (self._dists[id] > d0):
-                    j=j+1
+                    j+=1
                     hull[j] = id
                     d0 = self._dists[id]
 
-            self.hull = hull.subarray(0, j)
+            self.hull = hull[0:j]
             self.triangles =  []
             self.halfedges =  []
-            return
 
         # swap the order of the seed points for counter-clockwise orientation
         if (orient(i0x, i0y, i1x, i1y, i2x, i2y)):
@@ -170,6 +169,7 @@ class Delaunator:
 
         self.trianglesLen = 0
         self._addTriangle(i0, i1, i2, -1, -1, -1)
+        print("Test Triangle")
         xp=0
         yp=0
 
@@ -211,43 +211,46 @@ class Delaunator:
                 continue
 
             # add the first triangle from the point
-            t = self._addTriangle(e, i, hullNext[e], -1, -1, hullTri[e])
+            t = self._addTriangle(e, i, self.hullNext[e], -1, -1, self.hullTri[e])
+            print("First Triangle")
 
             # recursively flip triangles from the point until they satisfy the Delaunay condition
-            hullTri[i] = self._legalize(t + 2)
-            hullTri[e] = t # keep track of boundary triangles on the hull
+            self.hullTri[i] = self._legalize(t + 2,coords)
+            self.hullTri[e] = t # keep track of boundary triangles on the hull
             ++hullSize
 
             # walk forward through the hull, adding more triangles and flipping recursively
-            n = hullNext[e]
-            q = hullNext[n]
+            n = self.hullNext[e]
+            q = self.hullNext[n]
 
             while (orient(x, y, coords[2 * n], coords[2 * n + 1], coords[2 * q], coords[2 * q + 1])):
-                t = self._addTriangle(n, i, q, hullTri[i], -1, hullTri[n])
-                hullTri[i] = self._legalize(t + 2)
-                hullNext[n] = n # mark as removed
+                t = self._addTriangle(n, i, q, self.hullTri[i], -1, self.hullTri[n])
+                print("Forward Triangle")
+                self.hullTri[i] = self._legalize(t + 2,coords)
+                self.hullNext[n] = n # mark as removed
                 hullSize-=1
                 n = q
 
             # walk backward from the other side, adding more triangles and flipping
             if (e == start):
-                q = hullPrev[e]
+                q = self.hullPrev[e]
                 while (orient(x, y, coords[2 * q], coords[2 * q + 1], coords[2 * e], coords[2 * e + 1])):
-                    t = self._addTriangle(q, i, e, -1, hullTri[e], hullTri[q])
-                    self._legalize(t + 2)
-                    hullTri[q] = t
-                    hullNext[e] = e # mark as removed
+                    t = self._addTriangle(q, i, e, -1, self.hullTri[e], self.hullTri[q])
+                    print("Backward Triangle")
+                    self._legalize(t + 2,coords)
+                    self.hullTri[q] = t
+                    self.hullNext[e] = e # mark as removed
                     hullSize-=1
                     e = q
 
             # update the hull indices
-            self._hullStart = hullPrev[i] = e
-            hullNext[e] = hullPrev[n] = i
-            hullNext[i] = n
+            self._hullStart = self.hullPrev[i] = e
+            self.hullNext[e] = self.hullPrev[n] = i
+            self.hullNext[i] = n
 
             # save the two new edges in the hash table
-            hullHash[self._hashKey(x, y)] = i
-            hullHash[self._hashKey(coords[2 * e], coords[2 * e + 1])] = e
+            self.hullHash[self._hashKey(x, y)] = i
+            self.hullHash[self._hashKey(coords[2 * e], coords[2 * e + 1])] = e
 
         self.hull = [None] * hullSize
         e = self._hullStart
@@ -264,13 +267,13 @@ class Delaunator:
     def _hashKey(self,x, y):
         return math.floor(pseudoAngle(x - self._cx, y - self._cy) * self.hashSize) % self.hashSize
 
-    def _legalize(self,a):
+    def _legalize(self,a,coords):
         i = 0
         ar = 0
 
         # recursion eliminated with a fixed-size stack
         while True:
-            b = halfedges[a]
+            b = self._halfedges[a]
             """
               if the pair of triangles doesn't satisfy the Delaunay condition
               (p1 is inside the circumcircle of [p0, pl, pr]), flip them,
@@ -301,10 +304,10 @@ class Delaunator:
             al = a0 + (a + 1) % 3
             bl = b0 + (b + 2) % 3
 
-            p0 = triangles[ar]
-            pr = triangles[a]
-            pl = triangles[al]
-            p1 = triangles[bl]
+            p0 = self._triangles[ar]
+            pr = self._triangles[a]
+            pl = self._triangles[al]
+            p1 = self._triangles[bl]
 
             illegal = inCircle(
                 coords[2 * p0], coords[2 * p0 + 1],
@@ -313,22 +316,22 @@ class Delaunator:
                 coords[2 * p1], coords[2 * p1 + 1])
 
             if (illegal):
-                triangles[a] = p1
-                triangles[b] = p0
+                self._triangles[a] = p1
+                self._triangles[b] = p0
 
-                hbl = halfedges[bl]
+                hbl = self._halfedges[bl]
 
                 # edge swapped on the other side of the hull (rare); fix the halfedge reference
                 if (hbl == -1):
                     e = self._hullStart
-                    if (self._hullTri[e] == bl):
-                        self._hullTri[e] = a
+                    if (self.hullTri[e] == bl):
+                        self.hullTri[e] = a
                         break
 
                     e = self._hullPrev[e]
                     while (e != self._hullStart):
-                        if (self._hullTri[e] == bl):
-                            self._hullTri[e] = a
+                        if (self.hullTri[e] == bl):
+                            self.hullTri[e] = a
                             break
 
                 self._link(a, hbl)

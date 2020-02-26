@@ -1,6 +1,11 @@
 from Delaunator import *
 
-points = [[382, 302], [382, 328], [382, 205], [623, 175], [382, 188], [382, 284], [623, 87], [623, 341], [141, 227]]
+points = []
 
+for x in range (40,60,5):
+    for y in range (11,20,3):
+        points.append([x,y])
+
+print(points)
 triangles = Delaunator().run(points)
 print(triangles)
