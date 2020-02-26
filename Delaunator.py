@@ -4,11 +4,23 @@ EPSILON = math.pow(2,-52)
 EDGE_STACK =[None] * 512
 
 class Delaunator:
-    def constructor(self, coords):
+
+    def run(self,points):
+        n = len(points)
         if (len(points) < 3):
             raise ValueError("Need at least 3 points")
-        self.coords = coords
-        n = len(self.coords) >> 1
+        coords = [None] * n * 2
+
+        for i in range(0,n):
+            p = points[i]
+            coords[2 * i] = (p[0])
+            coords[2 * i+1] = (p[1])
+        triangles = self.constructor(coords)
+
+        return triangles
+
+    def constructor(self, coords):
+        n = len(coords) >> 1
 
         # arrays that will store the triangulation graph
         maxTriangles = max(2 * n - 5, 0)
@@ -26,10 +38,12 @@ class Delaunator:
         self._ids =  [None] * n
         self._dists = [None] * n
 
-        self.update()
+        triangles = self.update(coords)
 
-    def update(self):
-        n = len(self.coords) >> 1
+        return triangles
+
+    def update(self,coords):
+        n = len(coords) >> 1
 
         # populate an array of point indices; calculate input data bbox
         minX = math.inf
@@ -244,7 +258,8 @@ class Delaunator:
         # trim typed triangle mesh arrays
         self.triangles = self._triangles[0:self.trianglesLen]
         self.halfedges = self._halfedges[0:self.trianglesLen]
-        print (self.triangles)
+
+        return self.triangles
 
     def _hashKey(self,x, y):
         return math.floor(pseudoAngle(x - self._cx, y - self._cy) * self.hashSize) % self.hashSize
@@ -411,7 +426,7 @@ def circumradius(ax, ay, bx, by, cx, cy):
 
     bl = dx * dx + dy * dy
     cl = ex * ex + ey * ey
-    d = math.sqrt(dx * ey - dy * ex)
+    d = math.sqrt(abs(dx * ey - dy * ex))
 
     x = (ey * bl - dy * cl) * d
     y = (dx * cl - ex * bl) * d
@@ -426,7 +441,7 @@ def circumcenter(ax, ay, bx, by, cx, cy):
 
     bl = dx * dx + dy * dy
     cl = ex * ex + ey * ey
-    d = math.sqrt(dx * ey - dy * ex)
+    d = math.sqrt(abs(dx * ey - dy * ex))
 
     x = ax + (ey * bl - dy * cl) * d
     y = ay + (dx * cl - ex * bl) * d
@@ -489,14 +504,3 @@ def swap(arr, i, j):
     tmp = arr[i]
     arr[i] = arr[j]
     arr[j] = tmp
-
-points = [[168, 180], [168, 178], [168, 179], [168, 181], [168, 183]]
-n = len(points)
-coords = [None] * n * 2
-
-for i in range(0,n):
-    p = points[i]
-    coords[2 * i] = (p[0])
-    coords[2 * i+1] = (p[1])
-
-Delaunator().constructor(coords)
