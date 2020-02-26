@@ -165,7 +165,7 @@ class Delaunator:
             y = coords[2 * i + 1]
 
             # skip near-duplicate points
-            if (k > 0 and math.abs(x - xp) <= EPSILON and math.abs(y - yp) <= EPSILON):
+            if (k > 0 and abs(x - xp) <= EPSILON and abs(y - yp) <= EPSILON):
                 xp = x
                 yp = y
 
@@ -183,7 +183,7 @@ class Delaunator:
             start = self.hullPrev[start]
             e = start
             q = self.hullNext[e]
-            
+
             while True:
                 if orient(x, y, coords[2 * e], coords[2 * e + 1], coords[2 * q], coords[2 * q + 1]):
                     break
@@ -191,6 +191,7 @@ class Delaunator:
                 if (e == start):
                     e = -1
                     break
+                q = self.hullNext[e]
 
             if (e == -1): # likely a near-duplicate point; skip it
                 continue
@@ -206,7 +207,7 @@ class Delaunator:
             # walk forward through the hull, adding more triangles and flipping recursively
             n = hullNext[e]
             q = hullNext[n]
-            
+
             while (orient(x, y, coords[2 * n], coords[2 * n + 1], coords[2 * q], coords[2 * q + 1])):
                 t = self._addTriangle(n, i, q, hullTri[i], -1, hullTri[n])
                 hullTri[i] = self._legalize(t + 2)
@@ -234,15 +235,15 @@ class Delaunator:
             hullHash[self._hashKey(x, y)] = i
             hullHash[self._hashKey(coords[2 * e], coords[2 * e + 1])] = e
 
-        self.hull = (hullSize)
+        self.hull = [None] * hullSize
         e = self._hullStart
         for i in range(0,hullSize):
             self.hull[i] = e
-            e = hullNext[e]
+            e = self.hullNext[e]
 
         # trim typed triangle mesh arrays
-        self.triangles = self._triangles.subarray(0, self.trianglesLen)
-        self.halfedges = self._halfedges.subarray(0, self.trianglesLen)
+        self.triangles = self._triangles[0:self.trianglesLen]
+        self.halfedges = self._halfedges[0:self.trianglesLen]
         print (self.triangles)
 
     def _hashKey(self,x, y):
@@ -413,7 +414,7 @@ def circumradius(ax, ay, bx, by, cx, cy):
     try:
       d = 0.5 / (dx * ey - dy * ex)
     except:
-      d = 0
+      d = 0.5
 
     x = (ey * bl - dy * cl) * d
     y = (dx * cl - ex * bl) * d
@@ -431,7 +432,7 @@ def circumcenter(ax, ay, bx, by, cx, cy):
     try:
         d = 0.5 / (dx * ey - dy * ex)
     except:
-        d = 0
+        d = 0.5
 
     x = ax + (ey * bl - dy * cl) * d
     y = ay + (dx * cl - ex * bl) * d
