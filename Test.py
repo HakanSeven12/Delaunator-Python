@@ -1,11 +1,8 @@
-from Delaunator import *
+import numpy as np
+from Delaunator import Delaunator
 
-points = []
+#create random 2000 2d points between 4000000 and 4500000
+points = np.random.randint(4000000,4500000,size=(2000,2))
 
-for x in range (40,60,5):
-    for y in range (11,20,3):
-        points.append([x,y])
-
-print(points)
 triangles = Delaunator().run(points)
 print(triangles)
