@@ -169,7 +169,6 @@ class Delaunator:
 
         self.trianglesLen = 0
         self._addTriangle(i0, i1, i2, -1, -1, -1)
-        print("Test Triangle")
         xp=0
         yp=0
 
@@ -212,7 +211,6 @@ class Delaunator:
 
             # add the first triangle from the point
             t = self._addTriangle(e, i, self.hullNext[e], -1, -1, self.hullTri[e])
-            print("First Triangle")
 
             # recursively flip triangles from the point until they satisfy the Delaunay condition
             self.hullTri[i] = self._legalize(t + 2,coords)
@@ -225,7 +223,6 @@ class Delaunator:
 
             while (orient(x, y, coords[2 * n], coords[2 * n + 1], coords[2 * q], coords[2 * q + 1])):
                 t = self._addTriangle(n, i, q, self.hullTri[i], -1, self.hullTri[n])
-                print("Forward Triangle")
                 self.hullTri[i] = self._legalize(t + 2,coords)
                 self.hullNext[n] = n # mark as removed
                 hullSize-=1
@@ -236,7 +233,6 @@ class Delaunator:
                 q = self.hullPrev[e]
                 while (orient(x, y, coords[2 * q], coords[2 * q + 1], coords[2 * e], coords[2 * e + 1])):
                     t = self._addTriangle(q, i, e, -1, self.hullTri[e], self.hullTri[q])
-                    print("Backward Triangle")
                     self._legalize(t + 2,coords)
                     self.hullTri[q] = t
                     self.hullNext[e] = e # mark as removed
@@ -324,24 +320,24 @@ class Delaunator:
                 # edge swapped on the other side of the hull (rare); fix the halfedge reference
                 if (hbl == -1):
                     e = self._hullStart
-                    if (self.hullTri[e] == bl):
-                        self.hullTri[e] = a
-                        break
-
-                    e = self._hullPrev[e]
-                    while (e != self._hullStart):
+                    
+                    while True:
                         if (self.hullTri[e] == bl):
-                            self.hullTri[e] = a
-                            break
+                            self.hullTri[e] = a;
+                            break;
+                        e = self.hullPrev[e];
+
+                        if (e == self._hullStart):
+                            break;
 
                 self._link(a, hbl)
-                self._link(b, halfedges[ar])
+                self._link(b, self._halfedges[ar])
                 self._link(ar, bl)
 
                 br = b0 + (b + 1) % 3
 
                 # don't worry about hitting the cap: it can only happen on extremely degenerate input
-                if (i < EDGE_STACK.length):
+                if (i < len(EDGE_STACK)):
                     EDGE_STACK[++i] = br
 
             else:
@@ -479,13 +475,17 @@ def quicksort(ids, dists, left, right):
         temp = ids[i]
         tempDist = dists[temp]
 
+        """
         while True:
-            ++i
-            while (dists[ids[i]] < tempDist):
+            while True:
                 ++i
-            --j
-            while (dists[ids[j]] > tempDist):
+                if (dists[ids[i]] >= tempDist):
+                    break
+
+            while True:
                 --j
+                if (dists[ids[j]] <= tempDist):
+                    break
 
             if (j < i):
                 break
@@ -502,6 +502,7 @@ def quicksort(ids, dists, left, right):
         else:
             quicksort(ids, dists, left, j - 1)
             quicksort(ids, dists, i, right)
+        """
 
 def swap(arr, i, j):
     tmp = arr[i]
