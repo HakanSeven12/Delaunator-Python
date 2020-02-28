@@ -179,13 +179,15 @@ class Delaunator:
 
             # skip near-duplicate points
             if (k > 0 and abs(x - xp) <= EPSILON and abs(y - yp) <= EPSILON):
-                xp = x
-                yp = y
+                continue
+            xp = x
+            yp = y
 
             # skip seed triangle points
             if (i == i0 or i == i1 or i == i2):
-                # find a visible edge on the convex hull using edge hash
-                start = 0
+                continue
+            # find a visible edge on the convex hull using edge hash
+            start = 0
             key = self._hashKey(x, y)
 
             for j in range(0,self.hashSize):
@@ -195,16 +197,15 @@ class Delaunator:
 
             start = self.hullPrev[start]
             e = start
-            q = self.hullNext[e]
 
             while True:
+                q = self.hullNext[e]
                 if orient(x, y, coords[2 * e], coords[2 * e + 1], coords[2 * q], coords[2 * q + 1]):
                     break
                 e = q
                 if (e == start):
                     e = -1
                     break
-                q = self.hullNext[e]
 
             if (e == -1): # likely a near-duplicate point; skip it
                 continue
@@ -227,6 +228,7 @@ class Delaunator:
                 self.hullNext[n] = n # mark as removed
                 hullSize-=1
                 n = q
+                q = self.hullNext[n]
 
             # walk backward from the other side, adding more triangles and flipping
             if (e == start):
@@ -238,6 +240,7 @@ class Delaunator:
                     self.hullNext[e] = e # mark as removed
                     hullSize-=1
                     e = q
+                    q = self.hullPrev[e]
 
             # update the hull indices
             self._hullStart = self.hullPrev[i] = e
@@ -373,10 +376,7 @@ class Delaunator:
 
 # monotonically increases with real angle, but doesn't need expensive trigonometry
 def pseudoAngle(dx, dy):
-    try:
-      p = dx / (abs(dx) + abs(dy))
-    except:
-      p = 0
+    p = dx / (abs(dx) + abs(dy))
 
     if (dy > 0):
         return (3 - p) / 4 # [0..1]
@@ -392,7 +392,7 @@ def dist(ax, ay, bx, by):
 def orientIfSure(px, py, rx, ry, qx, qy):
     l = (ry - py) * (qx - px)
     r = (rx - px) * (qy - py)
-    
+
     if (abs(l - r) >= 3.3306690738754716e-16 * abs(l + r)):
         return l - r
     else:
@@ -428,12 +428,12 @@ def circumradius(ax, ay, bx, by, cx, cy):
 
     bl = dx * dx + dy * dy
     cl = ex * ex + ey * ey
-    d = math.sqrt(abs(dx * ey - dy * ex))
+    d = 0.5/(dx * ey - dy * ex)
 
     x = (ey * bl - dy * cl) * d
     y = (dx * cl - ex * bl) * d
 
-    return math.pow(x,2) + math.pow(y,2)
+    return x*x + y*y
 
 def circumcenter(ax, ay, bx, by, cx, cy):
     dx = bx - ax
@@ -443,7 +443,7 @@ def circumcenter(ax, ay, bx, by, cx, cy):
 
     bl = dx * dx + dy * dy
     cl = ex * ex + ey * ey
-    d = math.sqrt(abs(dx * ey - dy * ex))
+    d = 0.5/(dx * ey - dy * ex)
 
     x = ax + (ey * bl - dy * cl) * d
     y = ay + (dx * cl - ex * bl) * d
@@ -452,7 +452,7 @@ def circumcenter(ax, ay, bx, by, cx, cy):
 
 def quicksort(ids, dists, left, right):
     if (right - left <= 20):
-        for i in range(left + 1,right):
+        for i in range(left + 1,right+1):
             temp = ids[i]
             tempDist = dists[temp]
             j = i-1
