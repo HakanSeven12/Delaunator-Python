@@ -121,8 +121,8 @@ class Delaunator:
             for i in range(0,n):
                 id = self._ids[i]
                 if (self._dists[id] > d0):
-                    j+=1
                     hull[j] = id
+                    j+=1
                     d0 = self._dists[id]
 
             self.hull = hull[0:j]
@@ -215,7 +215,7 @@ class Delaunator:
             # recursively flip triangles from the point until they satisfy the Delaunay condition
             self.hullTri[i] = self._legalize(t + 2,coords)
             self.hullTri[e] = t # keep track of boundary triangles on the hull
-            ++hullSize
+            hullSize+=1
 
             # walk forward through the hull, adding more triangles and flipping recursively
             n = self.hullNext[e]
@@ -293,7 +293,8 @@ class Delaunator:
             if (b == -1): # convex hull edge
                 if (i == 0):
                     break
-                a = EDGE_STACK[--i]
+                i-=1
+                a = EDGE_STACK[i]
                 continue
 
             b0 = b - b % 3
@@ -323,12 +324,12 @@ class Delaunator:
                     
                     while True:
                         if (self.hullTri[e] == bl):
-                            self.hullTri[e] = a;
-                            break;
-                        e = self.hullPrev[e];
+                            self.hullTri[e] = a
+                            break
+                        e = self.hullPrev[e]
 
                         if (e == self._hullStart):
-                            break;
+                            break
 
                 self._link(a, hbl)
                 self._link(b, self._halfedges[ar])
@@ -338,12 +339,14 @@ class Delaunator:
 
                 # don't worry about hitting the cap: it can only happen on extremely degenerate input
                 if (i < len(EDGE_STACK)):
-                    EDGE_STACK[++i] = br
+                    EDGE_STACK[i] = br
+                    i+=1
 
             else:
                 if (i == 0):
                    break
-                a = EDGE_STACK[--i]
+                i-=1
+                a = EDGE_STACK[i]
 
         return ar
 
@@ -397,8 +400,8 @@ def orientIfSure(px, py, rx, ry, qx, qy):
 
 # a more robust orientation test that's stable in a given triangle (to fix robustness issues)
 def orient(rx, ry, qx, qy, px, py):
-    return (orientIfSure(px, py, rx, ry, qx, qy) or
-        orientIfSure(rx, ry, qx, qy, px, py) or
+    return (orientIfSure(px, py, rx, ry, qx, qy) or\
+        orientIfSure(rx, ry, qx, qy, px, py) or\
         orientIfSure(qx, qy, px, py, rx, ry)) < 0
 
 def inCircle(ax, ay, bx, by, cx, cy, px, py):
@@ -452,9 +455,10 @@ def quicksort(ids, dists, left, right):
         for i in range(left + 1,right):
             temp = ids[i]
             tempDist = dists[temp]
-            j = --i
+            j = i-1
             while (j >= left and dists[ids[j]] > tempDist):
-                ids[j + 1] = ids[--j]
+                ids[j + 1] = ids[j]
+                j-=1
             ids[j + 1] = temp;
 
     else:
@@ -475,15 +479,14 @@ def quicksort(ids, dists, left, right):
         temp = ids[i]
         tempDist = dists[temp]
 
-        """
         while True:
             while True:
-                ++i
+                i+=1
                 if (dists[ids[i]] >= tempDist):
                     break
 
             while True:
-                --j
+                j-=1
                 if (dists[ids[j]] <= tempDist):
                     break
 
@@ -502,7 +505,6 @@ def quicksort(ids, dists, left, right):
         else:
             quicksort(ids, dists, left, j - 1)
             quicksort(ids, dists, i, right)
-        """
 
 def swap(arr, i, j):
     tmp = arr[i]
