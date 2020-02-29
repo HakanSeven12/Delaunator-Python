@@ -7,6 +7,7 @@ class Delaunator:
 
     def run(self,points):
         n = len(points)
+
         if (len(points) < 3):
             raise ValueError("Need at least 3 points")
         coords = [None] * n * 2
@@ -37,7 +38,6 @@ class Delaunator:
         # temporary arrays for sorting points
         self._ids =  [None] * n
         self._dists = [None] * n
-
         triangles = self.update(coords)
 
         return triangles
@@ -71,21 +71,20 @@ class Delaunator:
         # pick a seed point close to the center
         for i in range(0,n):
             d = dist(cx, cy, coords[2 * i], coords[2 * i + 1])
+
             if (d < minDist):
                 i0 = i
                 minDist = d
 
         i0x = coords[2 * i0]
         i0y = coords[2 * i0 + 1]
-
         minDist = math.inf
 
         # find the point closest to the seed
         for i in range(0,n):
-            if (i == i0):
-                continue
-
+            if (i == i0): continue
             d = dist(i0x, i0y, coords[2 * i], coords[2 * i + 1])
+
             if (d < minDist and d > 0):
                 i1 = i
                 minDist = d
@@ -97,10 +96,9 @@ class Delaunator:
 
         # find the third point which forms the smallest circumcircle with the first two
         for i in range(0,n):
-            if (i == i0 or i == i1):
-                continue
-
+            if (i == i0 or i == i1): continue
             r = circumradius(i0x, i0y, i1x, i1y, coords[2 * i], coords[2 * i + 1])
+
             if (r < minRadius):
                 i2 = i
                 minRadius = r
@@ -118,8 +116,10 @@ class Delaunator:
             hull =  [None] * n
             j = 0
             d0 = -math.inf
+
             for i in range(0,n):
                 id = self._ids[i]
+
                 if (self._dists[id] > d0):
                     hull[j] = id
                     j+=1
@@ -169,6 +169,7 @@ class Delaunator:
 
         self.trianglesLen = 0
         self._addTriangle(i0, i1, i2, -1, -1, -1)
+
         xp=0
         yp=0
 
@@ -178,37 +179,35 @@ class Delaunator:
             y = coords[2 * i + 1]
 
             # skip near-duplicate points
-            if (k > 0 and abs(x - xp) <= EPSILON and abs(y - yp) <= EPSILON):
-                continue
+            if (k > 0 and abs(x - xp) <= EPSILON and abs(y - yp) <= EPSILON): continue
+
             xp = x
             yp = y
 
             # skip seed triangle points
-            if (i == i0 or i == i1 or i == i2):
-                continue
+            if (i == i0 or i == i1 or i == i2): continue
+
             # find a visible edge on the convex hull using edge hash
             start = 0
             key = self._hashKey(x, y)
 
             for j in range(0,self.hashSize):
                 start = self.hullHash[(key + j) % self.hashSize]
-                if (start != -1 and start != self.hullNext[start]):
-                    break
+                if (start != -1 and start != self.hullNext[start]): break
 
             start = self.hullPrev[start]
             e = start
 
             while True:
                 q = self.hullNext[e]
-                if orient(x, y, coords[2 * e], coords[2 * e + 1], coords[2 * q], coords[2 * q + 1]):
-                    break
+                if orient(x, y, coords[2 * e], coords[2 * e + 1], coords[2 * q], coords[2 * q + 1]): break
                 e = q
+
                 if (e == start):
                     e = -1
                     break
 
-            if (e == -1): # likely a near-duplicate point; skip it
-                continue
+            if (e == -1): continue # likely a near-duplicate point; skip it
 
             # add the first triangle from the point
             t = self._addTriangle(e, i, self.hullNext[e], -1, -1, self.hullTri[e])
@@ -294,8 +293,7 @@ class Delaunator:
             ar = a0 + (a + 2) % 3
 
             if (b == -1): # convex hull edge
-                if (i == 0):
-                    break
+                if (i == 0): break
                 i-=1
                 a = EDGE_STACK[i]
                 continue
@@ -329,10 +327,9 @@ class Delaunator:
                         if (self.hullTri[e] == bl):
                             self.hullTri[e] = a
                             break
-                        e = self.hullPrev[e]
 
-                        if (e == self._hullStart):
-                            break
+                        e = self.hullPrev[e]
+                        if (e == self._hullStart): break
 
                 self._link(a, hbl)
                 self._link(b, self._halfedges[ar])
@@ -346,8 +343,7 @@ class Delaunator:
                     i+=1
 
             else:
-                if (i == 0):
-                   break
+                if (i == 0): break
                 i-=1
                 a = EDGE_STACK[i]
 
@@ -482,17 +478,13 @@ def quicksort(ids, dists, left, right):
         while True:
             while True:
                 i+=1
-                if (dists[ids[i]] >= tempDist):
-                    break
+                if (dists[ids[i]] >= tempDist): break
 
             while True:
                 j-=1
-                if (dists[ids[j]] <= tempDist):
-                    break
+                if (dists[ids[j]] <= tempDist): break
 
-            if (j < i):
-                break
-
+            if (j < i): break
             swap(ids, i, j);
 
         ids[left + 1] = ids[j];
