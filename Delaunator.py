@@ -219,27 +219,27 @@ class Delaunator:
 
             # walk forward through the hull, adding more triangles and flipping recursively
             n = self.hullNext[e]
-            q = self.hullNext[n]
 
-            while (orient(x, y, coords[2 * n], coords[2 * n + 1], coords[2 * q], coords[2 * q + 1])):
+            while True:
+                q = self.hullNext[n]
+                if not (orient(x, y, coords[2 * n], coords[2 * n + 1], coords[2 * q], coords[2 * q + 1])): break
                 t = self._addTriangle(n, i, q, self.hullTri[i], -1, self.hullTri[n])
                 self.hullTri[i] = self._legalize(t + 2,coords)
                 self.hullNext[n] = n # mark as removed
                 hullSize-=1
                 n = q
-                q = self.hullNext[n]
 
             # walk backward from the other side, adding more triangles and flipping
             if (e == start):
-                q = self.hullPrev[e]
-                while (orient(x, y, coords[2 * q], coords[2 * q + 1], coords[2 * e], coords[2 * e + 1])):
+                while True:
+                    q = self.hullPrev[e]
+                    if not (orient(x, y, coords[2 * q], coords[2 * q + 1], coords[2 * e], coords[2 * e + 1])): break
                     t = self._addTriangle(q, i, e, -1, self.hullTri[e], self.hullTri[q])
                     self._legalize(t + 2,coords)
                     self.hullTri[q] = t
                     self.hullNext[e] = e # mark as removed
                     hullSize-=1
                     e = q
-                    q = self.hullPrev[e]
 
             # update the hull indices
             self._hullStart = self.hullPrev[i] = e
