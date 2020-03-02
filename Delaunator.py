@@ -5,7 +5,7 @@ EDGE_STACK =[None] * 512
 
 class Delaunator:
 
-    def run(self,points):
+    def __init__(self,points):
         n = len(points)
 
         if (len(points) < 3):
@@ -18,10 +18,10 @@ class Delaunator:
             coords[2 * i+1] = (p[1])
         triangles = self.constructor(coords)
 
-        return triangles
-
     def constructor(self, coords):
         n = len(coords) >> 1
+
+        self.coords = coords
 
         # arrays that will store the triangulation graph
         maxTriangles = max(2 * n - 5, 0)
