@@ -1,4 +1,4 @@
-import math,sys
+import math
 
 EPSILON = math.pow(2,-52)
 EDGE_STACK =[None] * 512
