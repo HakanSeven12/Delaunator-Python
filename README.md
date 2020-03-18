@@ -3,9 +3,17 @@ Fast Delaunay triangulation of 2D points implemented in Python.
 
 This code was ported from [Mapbox's Delaunator Project](https://github.com/mapbox/delaunator) (JavaScript).
 
+
+
 Test on FreeCAD.
 
 ![Test](https://user-images.githubusercontent.com/3831435/75558770-60245280-5a53-11ea-8d1f-855c9e3f9c13.png)
+
+
+
+Comparison result between python alternatives.
+
+![delauny_comparison](https://user-images.githubusercontent.com/3831435/76827861-cc170100-6830-11ea-868e-9cb5893d8543.png)
 
 ## Usage
 ```python
