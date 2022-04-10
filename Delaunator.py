@@ -424,7 +424,10 @@ def circumradius(ax, ay, bx, by, cx, cy):
 
     bl = dx * dx + dy * dy
     cl = ex * ex + ey * ey
-    d = 0.5/(dx * ey - dy * ex)
+    try:
+        d = 0.5/(dx * ey - dy * ex)
+    except ZeroDivisionError:
+        d = float('inf')
 
     x = (ey * bl - dy * cl) * d
     y = (dx * cl - ex * bl) * d
@@ -439,7 +442,10 @@ def circumcenter(ax, ay, bx, by, cx, cy):
 
     bl = dx * dx + dy * dy
     cl = ex * ex + ey * ey
-    d = 0.5/(dx * ey - dy * ex)
+    try:
+        d = 0.5/(dx * ey - dy * ex)
+    except ZeroDivisionError:
+        d = float('inf')
 
     x = ax + (ey * bl - dy * cl) * d
     y = ay + (dx * cl - ex * bl) * d
